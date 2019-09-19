@@ -48,6 +48,7 @@ namespace node_kcp
     using Nan::GetFunction;
     using Nan::Set;
     using Nan::To;
+	using v8::Isolate;
 
     Persistent<Function> KCPObject::constructor;
 
@@ -214,13 +215,15 @@ namespace node_kcp
     }
 
     NAN_METHOD(KCPObject::Input)
-    {
+	{
+		// Isolate* isolate = Isolate::GetCurrent();
+		Isolate* isolate = info.GetIsolate();		
         KCPObject* thiz = ObjectWrap::Unwrap<KCPObject>(info.Holder());
         char* buf = NULL;
         int len = 0;
         Local<Value> arg0 = info[0];
         if (arg0->IsString()) {
-            String::Value data(arg0);
+            String::Value data(isolate, arg0);
             len = data.length();
             if (0 == len) {
                 return;
@@ -235,11 +238,11 @@ namespace node_kcp
             info.GetReturnValue().Set(ret);
             free(buf);
         } else if (node::Buffer::HasInstance(arg0)) {
-            len = node::Buffer::Length(arg0->ToObject());
+            len = node::Buffer::Length(arg0->ToObject(isolate));
             if (0 == len) {
                 return;
             }
-            buf = node::Buffer::Data(arg0->ToObject());
+            buf = node::Buffer::Data(arg0->ToObject(isolate));
             int t = ikcp_input(thiz->kcp, (const char*)buf, len);
             Local<Number> ret = Nan::New(t);
             info.GetReturnValue().Set(ret);
@@ -248,12 +251,13 @@ namespace node_kcp
 
     NAN_METHOD(KCPObject::Send)
     {
+		Isolate* isolate = info.GetIsolate();
         KCPObject* thiz = ObjectWrap::Unwrap<KCPObject>(info.Holder());
         char* buf = NULL;
         int len = 0;
         Local<Value> arg0 = info[0];
         if (arg0->IsString()) {
-            String::Value data(arg0);
+            String::Value data(isolate, arg0);
             len = data.length();
             if (0 == len) {
                 return;
@@ -268,11 +272,11 @@ namespace node_kcp
             info.GetReturnValue().Set(ret);
             free(buf);
         } else if (node::Buffer::HasInstance(arg0)) {
-            len = node::Buffer::Length(arg0->ToObject());
+            len = node::Buffer::Length(arg0->ToObject(isolate));
             if (0 == len) {
                 return;
             }
-            buf = node::Buffer::Data(arg0->ToObject());
+            buf = node::Buffer::Data(arg0->ToObject(isolate));
             int t = ikcp_send(thiz->kcp, (const char*)buf, len);
             Local<Number> ret = Nan::New(t);
             info.GetReturnValue().Set(ret);
